@@ -1,0 +1,14 @@
+$kind: http-request
+name: ""
+url: http://localhost:3000/parking-pass/toggle
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"account\": \"20235769\",\r
+
+    \  \"password\": \"long123\"\r
+
+    }"
+order: 1000

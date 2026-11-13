@@ -1,0 +1,111 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Phân quyền người dùng
+enum Role {
+  STUDENT
+  SECURITY_GUARD
+  ADMIN
+}
+
+// 2. Trạng thái giữ chỗ
+enum ReservationStatus {
+  PENDING      // Đang giữ chỗ (trong 15p)
+  CHECKED_IN   // Đã đến và vào bãi thành công
+  EXPIRED      // Quá 15p không đến (No-show)
+  CANCELLED    // Người dùng chủ động hủy
+}
+
+// 3. Trạng thái gửi xe thực tế
+enum ParkingStatus {
+  PARKED       // Đang ở trong bãi
+  COMPLETED    // Đã lấy xe ra về
+}
+
+// 4. Bảng Người dùng
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String?       // Mật khẩu đã mã hóa bcrypt
+  fullName     String
+  studentId    String?       @unique // Mã số sinh viên (VD: 20210000)
+  karmaScore   Int           @default(100) // Điểm uy tín chống spam (100 là tối đa)
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now())
+
+  vehicles     Vehicle[]
+  reservations Reservation[]
+}
+
+// 5. Bảng Phương tiện của sinh viên
+model Vehicle {
+  id           String           @id @default(uuid())
+  plateNumber  String           @unique // Biển số xe (VD: 29A1-12345)
+  rfidCardId   String?          @unique // Mã thẻ sinh viên / RFID nếu đã gán
+  model        String?          // Hãng xe (Wave, Vision...)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  
+  sessions     ParkingSession[]
+}
+
+// 6. Bảng Nhà xe trong khuôn viên
+model ParkingLot {
+  id              String        @id @default(uuid())
+  name            String        // VD: Nhà xe B1, Nhà xe C2
+  totalCapacity   Int           // Tổng sức chứa (VD: 500)
+  reservedQuota   Int           // Số chỗ tối đa cho đặt trước (VD: 100)
+  availableSlots  Int           // Số chỗ thực tế đang còn trống
+  latitude        Float         // Tọa độ vĩ độ (bản đồ)
+  longitude       Float         // Tọa độ kinh độ (bản đồ)
+  isOpen          Boolean       @default(true)
+
+  reservations    Reservation[]
+  sessions        ParkingSession[]
+}
+
+// 7. Bảng Lượt đặt trước (Reservation)
+model Reservation {
+  id           String            @id @default(uuid())
+  userId       String
+  parkingLotId String
+  status       ReservationStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  expiresAt    DateTime          // Hết hạn sau 15 phút
+
+  user         User              @relation(fields: [userId], references: [id])
+  parkingLot   ParkingLot        @relation(fields: [parkingLotId], references: [id])
+}
+
+// 8. Bảng Lượt gửi xe thực tế (Session ra/vào tại barrier)
+model ParkingSession {
+  id                 String        @id @default(uuid())
+  vehicleId          String
+  parkingLotId       String
+  checkInTime        DateTime      @default(now())
+  checkOutTime       DateTime?
+  checkInPlateImage  String?       // Link ảnh chụp biển số lúc vào
+  checkOutPlateImage String?       // Link ảnh chụp biển số lúc ra
+  status             ParkingStatus @default(PARKED)
+
+  vehicle            Vehicle       @relation(fields: [vehicleId], references: [id])
+  parkingLot         ParkingLot    @relation(fields: [parkingLotId], references: [id])
+}
+
+// 9. Bảng Cảnh báo & Thông báo thông minh
+model Notification {
+  id           String   @id @default(uuid())
+  title        String
+  message      String
+  type         String   // 'OVERLOAD' | 'CLOSING' | 'OVERNIGHT'
+  parkingLotId String?  // ID nhà xe bị quá tải (nếu có)
+  suggestLotId String?  // ID nhà xe gợi ý chuyển hướng (nếu có)
+  isRead       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}

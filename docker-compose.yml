@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Cơ sở dữ liệu quan hệ
+  postgres:
+    image: postgres:16-alpine
+    container_name: parking_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: parking_hust_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Bộ nhớ đệm & cơ chế giữ chỗ 15 phút
+  redis:
+    image: redis:7-alpine
+    container_name: parking_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
