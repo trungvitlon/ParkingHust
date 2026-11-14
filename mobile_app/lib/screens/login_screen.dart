@@ -14,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Chế độ màn hình: false = Đăng nhập, true = Đăng ký
   bool _isRegisterMode = false;
   bool _isLoading = false;
+  bool _obscurePassword = true; // Mặc định ẩn mật khẩu
 
   // Controllers cho Đăng nhập & Đăng ký
   final _accountController = TextEditingController(text: '20210001');
@@ -34,8 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (_fullNameController.text.isEmpty ||
             _studentIdController.text.isEmpty ||
             _emailController.text.isEmpty ||
-            _passwordController.text.isEmpty ||
-            _plateNumberController.text.isEmpty) {
+            _passwordController.text.isEmpty) {
           throw Exception('Vui lòng điền đầy đủ các thông tin bắt buộc!');
         }
 
@@ -44,7 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
           studentId: _studentIdController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          plateNumber: _plateNumberController.text.trim(),
+          plateNumber: _plateNumberController.text.trim().isEmpty
+              ? 'Chưa cập nhật (${_studentIdController.text.trim()})'
+              : _plateNumberController.text.trim(),
           vehicleModel: _vehicleModelController.text.trim().isEmpty
               ? 'Xe máy sinh viên'
               : _vehicleModelController.text.trim(),
@@ -158,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   controller: _plateNumberController,
                   decoration: InputDecoration(
-                    labelText: 'Biển số xe máy (*)',
+                    labelText: 'Biển số xe máy (Optional)',
                     hintText: 'vd: 29-B1 123.45',
                     prefixIcon: const Icon(Icons.two_wheeler),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -168,7 +170,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(
                   controller: _vehicleModelController,
                   decoration: InputDecoration(
-                    labelText: 'Dòng xe (Honda Wave, Vision...)',
+                    labelText: 'Dòng xe (Optional)',
+                    hintText: 'vd: Honda Wave, Vision...',
                     prefixIcon: const Icon(Icons.info_outline),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -179,10 +182,21 @@ class _LoginScreenState extends State<LoginScreen> {
               // Ô NHẬP MẬT KHẨU (DÙNG CHUNG CHO CẢ 2 CHẾ ĐỘ)
               TextField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu (*)',
                   prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
