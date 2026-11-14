@@ -6,7 +6,7 @@ import '../models/parking_lot.dart';
 class ApiService {
   // Khi test trên Edge/Chrome Web hoặc Windows Desktop dùng localhost:3000
   // (Nếu sau này chạy trên máy ảo Android Emulator thì đổi thành http://10.0.2.2:3000)
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://parking-hust-api.onrender.com';
   //static const String baseUrl = 'http://192.168.2.103:3000'; // Địa chỉ IP của máy tính chạy backend (có thể thay đổi tùy mạng)
   
   // BIẾN LƯU ID CỦA NGƯỜI ĐANG ĐĂNG NHẬP:

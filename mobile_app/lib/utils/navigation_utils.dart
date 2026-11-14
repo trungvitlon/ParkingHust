@@ -20,23 +20,14 @@ class NavigationUtils {
     return (bearing * (180.0 / math.pi) + 360.0) % 360.0;
   }
 
-  // 2. SINH 20 ĐIỂM MỐC (WAYPOINTS) GIÚP XE CHẠY MƯỢT MÀ, GIẢM KHOẢNG CÁCH TỪ TỪ
+    // 2. SINH 20 ĐIỂM MỐC (WAYPOINTS) GIÚP XE CHẠY MƯỢT MÀ TỪ VỊ TRÍ HIỆN TẠI
   static List<LatLng> generateRouteWaypoints(LatLng start, LatLng destination) {
     List<LatLng> waypoints = [];
 
-    // Kiểm tra khoảng cách từ vị trí hiện tại đến nhà xe
-    double dist = Geolocator.distanceBetween(
-      start.latitude, start.longitude,
-      destination.latitude, destination.longitude,
-    );
-
-    // NẾU ĐANG Ở XA TRƯỜNG (> 800m), TỰ ĐỘNG XUẤT PHÁT TỪ CỔNG PARABOL (GIẢI PHÓNG)
+    // Xuất phát trực tiếp từ vị trí hiện tại (không ép về Cổng Parabol nữa)
     LatLng actualStart = start;
-    if (dist > 800) {
-      actualStart = const LatLng(21.0065, 105.8425); // Cổng Parabol Bách Khoa
-    }
 
-    // Tạo 2 khúc cua nội bộ trong trường
+    // Tạo 2 khúc cua hướng về bãi xe
     LatLng corner1 = LatLng(
       actualStart.latitude + (destination.latitude - actualStart.latitude) * 0.45,
       actualStart.longitude,
@@ -46,19 +37,19 @@ class NavigationUtils {
       destination.longitude,
     );
 
-    // Chặng 1: Từ cổng đến ngã tư thứ nhất (7 mốc)
-    for (int i = 0; i < 7; i++) {
-      waypoints.add(_interpolate(actualStart, corner1, i / 7.0));
+    // Chặng 1: Từ vị trí hiện tại đến ngã rẽ thứ nhất (15 mốc)
+    for (int i = 0; i < 15; i++) {
+      waypoints.add(_interpolate(actualStart, corner1, i / 15.0));
     }
 
-    // Chặng 2: Rẽ ngang hướng về bãi xe (7 mốc)
-    for (int i = 0; i < 7; i++) {
-      waypoints.add(_interpolate(corner1, corner2, i / 7.0));
+    // Chặng 2: Rẽ ngang hướng về bãi xe (15 mốc)
+    for (int i = 0; i < 15; i++) {
+      waypoints.add(_interpolate(corner1, corner2, i / 15.0));
     }
 
-    // Chặng 3: Tiến vào cổng barrier nhà xe (6 mốc)
-    for (int i = 0; i <= 6; i++) {
-      waypoints.add(_interpolate(corner2, destination, i / 6.0));
+    // Chặng 3: Tiến vào cổng barrier nhà xe (15 mốc)
+    for (int i = 0; i <= 15; i++) {
+      waypoints.add(_interpolate(corner2, destination, i / 15.0));
     }
 
     return waypoints;
