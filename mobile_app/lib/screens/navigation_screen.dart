@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -192,14 +193,18 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
         return;
       }
 
-      // 3. Ưu tiên 1: Lấy ngay vị trí gần nhất trong bộ nhớ đệm (Cực nhanh - 0.05s)
-      Position? lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null && mounted) {
-        debugPrint('⚡ [ƯU TIÊN 1 - CACHE]: Lấy thành công từ bộ nhớ đệm -> Lat: ${lastKnown.latitude}, Lng: ${lastKnown.longitude}');
-        _onNewPosition(LatLng(lastKnown.latitude, lastKnown.longitude));
-        setState(() => _isLoadingGps = false);
-      } else {
-        debugPrint('⏳ [ƯU TIÊN 1 - CACHE]: Bộ nhớ đệm rỗng, chuyển tiếp sang Ưu tiên 2 & 3...');
+      // 3. Ưu tiên 1: Lấy ngay vị trí gần nhất trong bộ nhớ đệm (Chỉ chạy trên Mobile, Web không hỗ trợ)
+      if (!kIsWeb) {
+        try {
+          Position? lastKnown = await Geolocator.getLastKnownPosition();
+          if (lastKnown != null && mounted) {
+            debugPrint('⚡ [ƯU TIÊN 1 - CACHE]: Lấy thành công -> Lat: ${lastKnown.latitude}, Lng: ${lastKnown.longitude}');
+            _onNewPosition(LatLng(lastKnown.latitude, lastKnown.longitude));
+            setState(() => _isLoadingGps = false);
+          }
+        } catch (e) {
+          debugPrint('⚠️ [ƯU TIÊN 1 - CACHE]: Không lấy được cache ($e)');
+        }
       }
 
       // 4. Ưu tiên 2: Mở ngay Stream lắng nghe (Google Fused Location tự chọn Wi-Fi/4G/Vệ tinh)
