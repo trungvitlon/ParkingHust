@@ -52,6 +52,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
 
   // Chế độ: false = GPS thật ngoài đường, true = Mô phỏng Demo xe tự chạy
   bool _isDemoMode = false;
+  bool _isFollowingUser = false; // Mặc định false: tự do kéo bản đồ
   Timer? _demoTimer;
   List<LatLng> _routePoints = [];
   int _demoCurrentIndex = 0;
@@ -80,14 +81,14 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
     );
     _animProgress = Tween<double>(begin: 0.0, end: 1.0).animate(_animController!)
       ..addListener(() {
-        if (_previousLocation != null && _currentLocation != null) {
+        if (_isFollowingUser && _previousLocation != null && _currentLocation != null) {
           // Nội suy vị trí xe mượt mà giữa 2 điểm tọa độ (không bị giật)
           final lat = _previousLocation!.latitude +
               (_currentLocation!.latitude - _previousLocation!.latitude) * _animProgress!.value;
           final lng = _previousLocation!.longitude +
               (_currentLocation!.longitude - _previousLocation!.longitude) * _animProgress!.value;
-
-          _mapController.move(LatLng(lat, lng), 17.5);
+         
+          _mapController.move(LatLng(lat, lng), _mapController.camera.zoom);
         }
       });
   }
@@ -221,6 +222,9 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
               LatLng(position.latitude, position.longitude),
               speedMs: position.speed,
             );
+            if (_isLoadingGps) {
+              setState(() => _isLoadingGps = false);
+            }
           }
         },
         onError: (err) {
@@ -233,7 +237,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
       Position currentPosition = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 8),
+          timeLimit: Duration(seconds: 4),
         ),
       );
 
@@ -624,15 +628,51 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
             ),
           ),
 
-          // NÚT TRÒN ĐỊNH VỊ BÊN PHẢI MÀN HÌNH
+          // NÚT TRÒN ĐỊNH VỊ & NÚT DẪN ĐƯỜNG (BÁM THEO XE) BÊN PHẢI MÀN HÌNH
           Positioned(
             right: 16,
-            bottom: 230,
-            child: FloatingActionButton.small(
-              heroTag: 'my_location_btn',
-              backgroundColor: Colors.white,
-              onPressed: _zoomToCurrentLocation,
-              child: const Icon(Icons.my_location, color: Color(0xFFB71C1C)),
+            bottom: 195,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Nút định vị: bấm để nhảy về vị trí hiện tại 1 lần
+                FloatingActionButton.small(
+                  heroTag: 'my_location_btn',
+                  backgroundColor: Colors.white,
+                  tooltip: 'Vị trí hiện tại',
+                  onPressed: _zoomToCurrentLocation,
+                  child: const Icon(Icons.my_location, color: Color(0xFFB71C1C)),
+                ),
+                const SizedBox(height: 10),
+                // 2. Nút dẫn đường: bật/tắt chế độ camera tự động bám theo xe
+                FloatingActionButton.small(
+                  heroTag: 'follow_mode_btn',
+                  backgroundColor: _isFollowingUser ? const Color(0xFFB71C1C) : Colors.white,
+                  tooltip: _isFollowingUser ? 'Tắt bám theo xe (Tự do kéo)' : 'Bật bám theo xe',
+                  onPressed: () {
+                    setState(() {
+                      _isFollowingUser = !_isFollowingUser;
+                    });
+                    if (_isFollowingUser && _currentLocation != null) {
+                      _mapController.move(_currentLocation!, 17.5);
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        duration: const Duration(seconds: 2),
+                        content: Text(
+                          _isFollowingUser
+                              ? '🧭 Đã bật dẫn đường: Camera tự động bám theo xe'
+                              : '🖐️ Đã tắt bám theo xe: Tự do kéo bản đồ',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    Icons.navigation,
+                    color: _isFollowingUser ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
 
