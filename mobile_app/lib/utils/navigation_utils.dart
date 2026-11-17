@@ -38,18 +38,18 @@ class NavigationUtils {
     );
 
     // Chặng 1: Từ vị trí hiện tại đến ngã rẽ thứ nhất (15 mốc)
-    for (int i = 0; i < 15; i++) {
-      waypoints.add(_interpolate(actualStart, corner1, i / 15.0));
+    for (int i = 0; i < 9; i++) {
+      waypoints.add(_interpolate(actualStart, corner1, i / 9.0));
     }
 
     // Chặng 2: Rẽ ngang hướng về bãi xe (15 mốc)
-    for (int i = 0; i < 15; i++) {
-      waypoints.add(_interpolate(corner1, corner2, i / 15.0));
+    for (int i = 0; i < 9; i++) {
+      waypoints.add(_interpolate(corner1, corner2, i / 9.0));
     }
 
     // Chặng 3: Tiến vào cổng barrier nhà xe (15 mốc)
-    for (int i = 0; i <= 15; i++) {
-      waypoints.add(_interpolate(corner2, destination, i / 15.0));
+    for (int i = 0; i <= 6; i++) {
+      waypoints.add(_interpolate(corner2, destination, i / 6.0));
     }
 
     return waypoints;

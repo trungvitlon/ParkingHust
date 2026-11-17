@@ -313,7 +313,7 @@ class _NavigationScreenState extends State<NavigationScreen> with TickerProvider
       // Đặt vị trí bắt đầu xe ngay tại mốc đầu tiên của lộ trình
       _onNewPosition(_routePoints[0], speedMs: 6.0);
       // CỨ MỖI 1 GIÂY TIẾN LÊN 1 ĐOẠN (~20 mét / giây -> Tốc độ ~22 km/h)
-      _demoTimer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
+      _demoTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
         if (_demoCurrentIndex < _routePoints.length - 1) {
           _demoCurrentIndex++;
           final nextPoint = _routePoints[_demoCurrentIndex];
